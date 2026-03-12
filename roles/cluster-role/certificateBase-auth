@@ -1,0 +1,46 @@
+1. User ki Private Key generate karein
+openssl genrsa -out user1.key 2048
+2. Certificate Signing Request (CSR)
+openssl req -new -key user1.key -out user1.csr -subj "/CN=user1/O=developers"
+3. CSR content ko base64 mein convert karein
+cat user1.csr | base64 | tr -d '\n'
+4. csr.yaml
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: user1-csr
+spec:
+  request: <PASTE_BASE64_STRING_HERE>
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 86400  # 1 din ke liye
+  usages:
+  - client auth
+5. Apply the yaml file
+6. CSR ko Approve karein
+   kubectl certificate approve user1-csr
+7. Final Certificate Download karein
+   kubectl get csr user1-csr -o jsonpath='{.status.certificate}' | base64 -d > user1.crt
+
+___________________________________________________________________
+
+1. User ke Credentials Add karein
+kubectl config set-credentials user1 \
+  --client-certificate=user1.crt \
+  --client-key=user1.key \
+  --embed-certs=true
+
+2. Context Create karein
+kubectl config set-context user1-context \
+  --cluster=kubernetes \
+  --namespace=default \
+  --user=user1
+
+3 bilkul naya context
+kubectl config set-cluster kubernetes \
+  --certificate-authority=/etc/kubernetes/pki/ca.crt \
+  --embed-certs=true \
+  --server=https://<MASTER_IP>:6443
+
+kubectl config set-context user1-context \
+  --cluster=kubernetes \
+  --user=user1  
