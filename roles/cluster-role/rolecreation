@@ -1,0 +1,22 @@
+########### Cluser Scope Role Creation ####################################
+
+User Level
+
+kubectl create clusterrolebinding  test --clusterrole=admin --user=user1
+kubectl describe  clusterrolebinding demo
+
+Group Level
+kubectl create clusterrolebinding demo --clusterrole=cluster-admin --group=developers
+kubectl describe  clusterrolebinding demo
+
+
+###########  namespace Scope Role Creation #################################
+
+
+kubectl create rolebinding  test --clusterrole=admin --user=user1 -n kube-system
+kubectl get rolebinding -n kube-system
+
+
+Group Level
+kubectl create rolebinding demo --clusterrole=cluster-admin --group=developers -n kube-system
+kubectl get rolebinding -n kube-system
