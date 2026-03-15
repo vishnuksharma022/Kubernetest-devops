@@ -50,7 +50,7 @@ Run on Jump Host
 
 kubectl config set-cluster kubernetes \
 --server=https://192.168.153.155:6443 \
---certificate-authority=/etc/kubernetes/pki/ca.crt \
+--certificate-authority=ca.crt \
 --embed-certs=true
 
 Step 8 — User credentials add karo
