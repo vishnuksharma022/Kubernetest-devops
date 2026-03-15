@@ -1,46 +1,71 @@
-1. User ki Private Key generate karein
-openssl genrsa -out user1.key 2048
-2. Certificate Signing Request (CSR)
-openssl req -new -key user1.key -out user1.csr -subj "/CN=user1/O=developers"
-3. CSR content ko base64 mein convert karein
-cat user1.csr | base64 | tr -d '\n'
-4. csr.yaml
+Step 1 — Jump Host par Private Key generate
+Run on Jump Host
+openssl genrsa -out ram.key 2048
+
+Step 2 — CSR generate
+Run on Jump Host
+openssl req -new -key ram.key -out ram.csr -subj "/CN=ram/O=developers"
+
+CN = username
+O = group name
+
+Step 3 — CSR ko base64 encode karo
+cat ram.csr | base64 | tr -d '\n'
+
+
+Step 4 — CSR YAML banao
+Run on Master Node
+
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
 metadata:
-  name: user1-csr
+  name: ram-csr
 spec:
-  request: <PASTE_BASE64_STRING_HERE>
+  request: PASTE_BASE64_CSR_HERE
   signerName: kubernetes.io/kube-apiserver-client
-  expirationSeconds: 86400  # 1 din ke liye
+  expirationSeconds: 86400
   usages:
   - client auth
-5. Apply the yaml file
-6. CSR ko Approve karein
-   kubectl certificate approve user1-csr
-7. Final Certificate Download karein
-   kubectl get csr user1-csr -o jsonpath='{.status.certificate}' | base64 -d > user1.crt
 
-___________________________________________________________________
+  # kubectl apply -f ram-csr.yaml
 
-1. User ke Credentials Add karein
-kubectl config set-credentials user1 \
-  --client-certificate=user1.crt \
-  --client-key=user1.key \
-  --embed-certs=true
+Step 5 — CSR approve karo
+Run on Master Node
 
-2. Context Create karein
-kubectl config set-context user1-context \
-  --cluster=kubernetes \
-  --namespace=default \
-  --user=user1
+kubectl certificate approve ram-csr
 
-3 bilkul naya context
+kubectl get csr
+
+Step 6 — Certificate download karo
+Run on Master Node
+
+kubectl get csr ram-csr -o jsonpath='{.status.certificate}' | base64 -d > ram.crt
+
+crt ko jump host par copy karo.
+scp ram.crt ram@jump-host:/home/ram/
+
+Step 7 — Cluster configuration
+Run on Jump Host
+
 kubectl config set-cluster kubernetes \
-  --certificate-authority=/etc/kubernetes/pki/ca.crt \
-  --embed-certs=true \
-  --server=https://<MASTER_IP>:6443
+--server=https://192.168.153.155:6443 \
+--certificate-authority=/etc/kubernetes/pki/ca.crt \
+--embed-certs=true
 
-kubectl config set-context user1-context \
-  --cluster=kubernetes \
-  --user=user1  
+Step 8 — User credentials add karo
+Run on Jump Host
+
+kubectl config set-credentials ram \
+--client-certificate=ram.crt \
+--client-key=ram.key \
+--embed-certs=true
+
+Step 9 — Context create karo
+
+kubectl config set-context ram-context \
+--cluster=kubernetes \
+--user=ram \
+--namespace=default
+
+Step 10 — Context activate karo
+kubectl config use-context ram-context
