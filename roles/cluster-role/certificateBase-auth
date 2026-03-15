@@ -41,8 +41,9 @@ Run on Master Node
 
 kubectl get csr ram-csr -o jsonpath='{.status.certificate}' | base64 -d > ram.crt
 
-crt ko jump host par copy karo.
+crt & CA ko jump host par copy karo.
 scp ram.crt ram@jump-host:/home/ram/
+scp  /etc/kubernetes/pki/ca.crt   shyam@192.168.153.157:/home/shyam/
 
 Step 7 — Cluster configuration
 Run on Jump Host
